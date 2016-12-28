@@ -55,22 +55,27 @@ var imageSizes = [
     }
 ]
 
+function exportImages (zip) {
+    zip.generateAsync({type: 'blob'}).then(function (blob) {
+        saveAs(blob, 'app-icons.zip')
+    })
+}
+
 function resizeImage (originalCanvas) {
-    var size = 100
-    var resizedCanvas = document.createElement('canvas')
-    resizedCanvas.width = size
-    resizedCanvas.height = size
-
-    pica.resizeCanvas(originalCanvas, resizedCanvas, {}, function (error) {
-        if (error) {
-            return console.error(error)
-        }
-
-        var data = resizedCanvas.toDataURL('image/png')
-        var link = document.createElement('a')
-        link.setAttribute('href', data)
-        link.setAttribute('download', 'resized-image.png')
-        link.click()
+    var zip = new JSZip()
+    var resizedImages = []
+    imageSizes.forEach(function (imageSize) {
+        var resizedCanvas = document.createElement('canvas')
+        resizedCanvas.width = imageSize.size
+        resizedCanvas.height = imageSize.size
+        pica.resizeCanvas(originalCanvas, resizedCanvas, {}, function () {
+            resizedCanvas.toBlob(function (blob) {
+                zip.file(imageSize.name, blob)
+                if (Object.keys(zip.files).length === imageSizes.length) {
+                    exportImages(zip)
+                }
+            }, 'image/png')
+        })
     })
 }
 
